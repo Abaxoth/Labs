@@ -1,0 +1,185 @@
+ #include "stdafx.h"
+            #include <iostream>
+            #include <fstream>
+            #include <string>
+            #include <vector>
+            #include <algorithm>
+            #include <ctime>
+            #include <stdio.h>
+            #include <stdlib.h>
+            #include <fstream>
+            #include <windows.h>
+
+            using namespace std;
+            int n,iter=0;
+            float trigger;
+            vector<vector<float>>generation(30);
+            vector<int> rnarr;
+            ofstream fin;
+
+            void firstgen(int n)
+            {
+                srand(time(0));
+                int num;
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < 2; j++)
+                    {
+                        num = rand() % 1000 - 500;
+                        generation[i].push_back(num);
+                    }
+                }
+            }
+
+            void output(int n,int n1)
+            {
+                cout << "iter #" << iter << "\n";
+                fin << "iter #" << iter << "\n";
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < n1; j++)
+                    {
+                        cout << generation[i][j] << " ";
+                        fin << generation[i][j] << " ";
+                    }
+                    cout << "\n";
+                    fin << "\n";
+                }
+                cout << "\n";
+                fin<< "\n";
+            }
+
+            void fitness(int n)
+            {
+                float speed,x,y,coeff=0;
+                for (int i = 0; i < n; i++)
+                {
+                    x = generation[i][0] - 1;
+                    y = generation[i][1] + 2;
+                    if ((pow(x, 4) - pow(0.1, 4) != 0))
+                    {
+                        speed = abs((pow(x + 0.1, 4) - pow(y + 0.1, 4)) - (pow(x - 0.1, 4) - pow(y - 0.1, 4)));
+                        generation[i].push_back(speed);
+                    }
+                    else
+                    {
+                        generation[i].push_back(1000);
+                    }
+                    /*if (speed < 10)
+                    {
+                        cout << generation[i][0] << " " << generation[i][1] << " " << speed;
+                        exit;
+                    }*/
+                }
+                for (int i = 0; i < n; i++)
+                {
+                    coeff += 1 / generation[i][2];
+                }
+                for (int i = 0; i < n; i++)
+                {
+                    generation[i][2]=trunc(abs(1 / 1/generation[i][2] / coeff) * 1000) / 10;
+                }
+            }
+
+            void sort(int n)
+            {
+                int max = 0, j = 0, flag = 0;;
+                do
+                {
+                    for (int i = j; i < n; i++)
+                    {
+                        if (generation[i][2] > max)
+                        {
+                            max = generation[i][2];
+                            flag = i;
+                        }
+                    }
+                    swap(generation[flag], generation[j]);
+                    j++;
+                    flag = 0;
+                    max = 0;
+                } while (j < n);
+            }
+
+            void rng(int n)
+            {
+                for (int i = 0; i < n; i++) 
+                {
+                    for (int j = 0; j < ceil(generation[i][2]); j++)
+                    {
+                        rnarr.push_back(i);
+                    }
+                }
+                for (int i = 0; i < rnarr.size(); i++)
+                {
+                    fin << rnarr[i];
+                }
+                fin << "\n";
+            }
+
+            void crossover(int n)
+            {
+                vector<vector<float>>next_gen(30);
+                int point1,point2;
+                for (int i = 0; i < n; i++)
+                {
+                        point1 = rnarr[rand() % rnarr.size()];
+                        point2 = rnarr[rand() % rnarr.size()];
+                        next_gen[i].push_back(generation[point1][rand() % 1]);
+                        next_gen[i].push_back(generation[point2][rand() % 1]);
+                }
+                generation = next_gen;
+            }
+
+            void mutation(int n)
+            {
+                int flag;
+                for (int i = 0; i < n; i++)
+                {
+                    flag = rand() % 1000 - 500;
+                    if (flag >= 0)
+                    {
+                        generation[i][rand() % 1] += rand() % 200 - 100;
+                    }
+                }
+            }
+            void antipushback(int n)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    generation[i].pop_back();
+                }
+            }
+
+            void cleanup()
+            {
+                rnarr.clear();
+                iter++;
+            }
+
+            int main()
+            {
+                fin.open("C:\\Users\\ 1.txt");
+                cin >> n;
+                firstgen(n);
+                output(n, 2);
+                do
+                {
+                    fitness(n);
+                    sort(n);
+                    rng(n);
+                    crossover(n);
+                    fitness(n);
+                    mutation(n);
+                    antipushback(n);
+                    fitness(n);
+                    sort(n);
+                    output(n, 3);
+                    trigger = generation[0][2];
+                    antipushback(n);
+                    cleanup();
+                    Sleep(10);
+                } while (trigger < 99);
+                cout << generation[0][0] << " " << generation [0][1]<<" "<<trigger;
+                return 0;
+            }
